@@ -27,7 +27,6 @@ const ExpenseForm = ({onCancel, onSubmit, submitButtonLabel, defaultValues}) => 
       }
     })
   }
-
   const submitHandler = () => {
     const expenseData = {
       amount: +inputs.amount.value,
@@ -38,7 +37,7 @@ const ExpenseForm = ({onCancel, onSubmit, submitButtonLabel, defaultValues}) => 
     const amountIsValid = !isNaN(expenseData.amount) && expenseData.amount > 0
     const dateIsValid = expenseData.date.toString() !== 'Invalid Date'
     const descriptionIsValid = expenseData.description.trim().length > 0
-    if (!amountIsValid || !dateIsValid || !description) {
+    if (!amountIsValid || !dateIsValid || !descriptionIsValid) {
       setInputs((currentInputs)=> {
         return {
           amount: {value: currentInputs.amount.value, isValid:amountIsValid},

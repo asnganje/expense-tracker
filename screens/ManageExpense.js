@@ -1,12 +1,17 @@
-import { useContext, useEffect } from "react"
+import { useContext, useEffect, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import IconButton from "../components/UI/IconButton"
 import { GlobalStyles } from "../constants/styles"
 import Button from "../components/UI/Button"
 import { ExpensesContext } from "../store/expenses-context"
 import ExpenseForm from "../components/ManageExpense/ExpenseForm"
+import { deleteExpense, storeExpense, updateExpense } from "../util/http"
+import LoadingOverlay from "../components/UI/LoadingOverlay"
+import ErrorOverlay from "../components/UI/ErrorOverlay"
 
 const ManageExpense = ({route, navigation}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isError, setIsError] = useState(null)
   const expensesCtx = useContext(ExpensesContext)
   const editedExpenseId = route.params?.expenseId
   const isEditing = !!editedExpenseId
@@ -17,25 +22,53 @@ const ManageExpense = ({route, navigation}) => {
     })
   }, [navigation, isEditing])
 
-  const deleteExpenseHandler = () => {
-    expensesCtx.deleteExpense(editedExpenseId)
-    navigation.goBack()
+  const deleteExpenseHandler = async () => {
+    setIsSubmitting(true)
+    try {
+      await deleteExpense(editedExpenseId)
+      expensesCtx.deleteExpense(editedExpenseId)
+      navigation.goBack()
+    } catch (error) {
+      setIsError("Could not delete expense!")
+    }
+    setIsSubmitting(false)
   }
   const cancelHandler = () => {
     navigation.goBack()
   }
 
-  const confirmHandler = (expenseData) => {
-    if(isEditing) {
-      expensesCtx.updateExpense(
-        editedExpenseId,
-        expenseData)
-    } else {
-      expensesCtx.addExpense(expenseData)
+  const confirmHandler = async (expenseData) => {
+    setIsSubmitting(true)
+    try {
+      if(isEditing) {
+        expensesCtx.updateExpense(
+          editedExpenseId,
+          expenseData)
+          await updateExpense(editedExpenseId, expenseData)
+      } else {
+        const id = await storeExpense(expenseData)
+        expensesCtx.addExpense({...expenseData, id:id})
+      }
+      navigation.goBack()
+    } catch (error) {
+      setIsError("Could not submit expenses!")
+      setIsSubmitting(false)
     }
-    navigation.goBack()
+    
+  }
+
+  const errorHandler = () => {
+    setIsError(null)
+  }
+
+  if (isError && !isSubmitting) {
+    return <ErrorOverlay onConfirm={errorHandler} message={isError}/>
   }
   
+  if(isSubmitting) {  
+    return <LoadingOverlay />
+  }
+
   return(
     <View style={styles.container}>
       <ExpenseForm onCancel={cancelHandler} defaultValues={selectedExpense} onSubmit={confirmHandler} submitButtonLabel={isEditing?'Update ':'Add'}/>
