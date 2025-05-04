@@ -11,7 +11,7 @@ import ErrorOverlay from "../components/UI/ErrorOverlay"
 
 const ManageExpense = ({route, navigation}) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isError, setIsError] = useState(null)
+  const [isError, setIsError] = useState()
   const expensesCtx = useContext(ExpensesContext)
   const editedExpenseId = route.params?.expenseId
   const isEditing = !!editedExpenseId
@@ -47,7 +47,7 @@ const ManageExpense = ({route, navigation}) => {
           await updateExpense(editedExpenseId, expenseData)
       } else {
         const id = await storeExpense(expenseData)
-        expensesCtx.addExpense({...expenseData, id:id})
+        expensesCtx.addExpense({...expenseData, id: id})
       }
       navigation.goBack()
     } catch (error) {
@@ -61,7 +61,7 @@ const ManageExpense = ({route, navigation}) => {
     setIsError(null)
   }
 
-  if (isError && !isSubmitting) {
+  if (isError) {
     return <ErrorOverlay onConfirm={errorHandler} message={isError}/>
   }
   
